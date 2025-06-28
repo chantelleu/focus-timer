@@ -1,17 +1,17 @@
 import { StyleSheet } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Timer } from '@/components/Timer';
 
 export default function TimerScreen() {
   return (
-    <ThemedView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <Timer />
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
