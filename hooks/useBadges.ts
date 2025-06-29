@@ -80,9 +80,7 @@ const initialBadges: Badge[] = [
   { id: 'daily-legend', name: 'Daily Legend', description: 'Complete ten focus sessions in one day.', earned: false, icon: 'calendar.badge.exclamationmark', assignedIcon: getUniqueBadgeIcon() },
 ];
 
-const BADGE_POINT_VALUE = 50; // Points awarded per badge
-
-export function useBadges(completedSessionsToday: number, totalCompletedSessions: number, awardPoints: (points: number) => void) {
+export function useBadges(completedSessionsToday: number, totalCompletedSessions: number) {
   const [badges, setBadges] = useState<Badge[]>(initialBadges);
 
   useEffect(() => {
@@ -118,7 +116,6 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
           badge.earned = true;
           badge.earnedDate = new Date().toISOString();
           badge.assignedColor = getUniquePastelColor(); // Assign unique color
-          awardPoints(BADGE_POINT_VALUE); // Award points for earning a badge
           newBadgeEarned = true;
         }
       };

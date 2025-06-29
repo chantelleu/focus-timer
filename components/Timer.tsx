@@ -9,7 +9,6 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { TimerAnimation } from './TimerAnimation';
 import { RewardAnimation } from './RewardAnimation';
-import { usePoints } from '@/hooks/usePoints';
 import { useBadges } from '@/hooks/useBadges';
 import { useTimerActive } from '@/context/TimerActiveContext';
 
@@ -32,8 +31,7 @@ export function Timer() {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const { isTimerActive, setIsTimerActive, showRewardAnimation, setShowRewardAnimation } = useTimerActive();
 
-  const { awardPoints } = usePoints();
-  useBadges(completedSessionsToday, totalCompletedSessions, awardPoints);
+  useBadges(completedSessionsToday, totalCompletedSessions);
 
   const startPlayer = useAudioPlayer(require('../assets/sounds/startnotification1.mp3'));
   const endPlayer = useAudioPlayer(require('../assets/sounds/endalarm3.mp3'));
@@ -105,7 +103,6 @@ export function Timer() {
     if (time === 0 && isActive) {
       setIsActive(false);
       triggerForegroundNotification();
-      awardPoints(10);
       setIsTimerActive(false);
 
 
@@ -127,7 +124,7 @@ export function Timer() {
         clearInterval(interval);
       }
     };
-  }, [isActive, isPaused, time, totalCompletedSessions, completedSessionsToday, awardPoints, triggerForegroundNotification, setIsTimerActive]);
+  }, [isActive, isPaused, time, totalCompletedSessions, completedSessionsToday, triggerForegroundNotification, setIsTimerActive]);
 
   const handleStart = async () => {
     setIsButtonDisabled(true);

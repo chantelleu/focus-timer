@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { CustomHeader } from '@/components/CustomHeader';
-import { usePoints } from '@/hooks/usePoints';
 import { useBadges } from '@/hooks/useBadges';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
@@ -15,7 +14,6 @@ const DAILY_SESSIONS_KEY = 'daily-completed-sessions';
 const LAST_SESSION_DATE_KEY = 'last-session-date';
 
 export default function RewardsScreen() {
-  const { points } = usePoints();
   const [totalCompletedSessions, setTotalCompletedSessions] = useState(0);
   const [completedSessionsToday, setCompletedSessionsToday] = useState(0);
 
@@ -51,8 +49,6 @@ export default function RewardsScreen() {
     <ThemedView style={styles.container}>
       <CustomHeader title="Rewards" />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-
-        <ThemedText style={styles.pointsText}>Points: {points}</ThemedText>
 
         <ThemedText style={styles.subtitle}>Badges Earned:</ThemedText>
         {
@@ -100,10 +96,6 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     alignItems: 'center',
     paddingBottom: 20, // Add some padding at the bottom for better scrolling
-  },
-  pointsText: {
-    fontSize: 24,
-    marginBottom: 30,
   },
   subtitle: {
     fontSize: 22,
