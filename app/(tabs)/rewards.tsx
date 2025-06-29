@@ -1,8 +1,9 @@
 
-import React from 'react';
 import { StyleSheet } from 'react-native';
+
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { CustomHeader } from '@/components/CustomHeader';
 import { usePoints } from '@/hooks/usePoints';
 import { useBadges } from '@/hooks/useBadges';
 
@@ -14,7 +15,7 @@ export default function RewardsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Your Rewards</ThemedText>
+      <CustomHeader title="Rewards" />
       <ThemedText style={styles.pointsText}>Points: {points}</ThemedText>
 
       <ThemedText style={styles.subtitle}>Badges Earned:</ThemedText>
@@ -57,11 +58,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
   pointsText: {
     fontSize: 24,
     marginBottom: 30,
@@ -83,15 +79,18 @@ const styles = StyleSheet.create({
   badgeName: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#333',
   },
   badgeDescription: {
     fontSize: 14,
     textAlign: 'center',
     marginTop: 5,
+    color: '#333',
   },
   badgeDate: {
     fontSize: 12,
     marginTop: 5,
     fontStyle: 'italic',
+    color: '#333',
   },
 });

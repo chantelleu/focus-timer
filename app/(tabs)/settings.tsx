@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Switch, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { CustomHeader } from '@/components/CustomHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SOUND_ENABLED_KEY = 'sound-enabled';
@@ -44,7 +45,7 @@ export default function SettingsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Settings</ThemedText>
+      <CustomHeader title="Settings" />
 
       <ThemedView style={styles.settingItem}>
         <ThemedText style={styles.settingText}>Sound Alerts</ThemedText>
@@ -75,11 +76,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 30,
   },
   settingItem: {
     flexDirection: 'row',
