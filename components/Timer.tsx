@@ -32,7 +32,9 @@ export function Timer() {
   const { awardPoints } = usePoints();
   useBadges(completedSessionsToday, totalCompletedSessions);
 
-  const player = useAudioPlayer(require('../assets/sounds/alarm.mp3'));
+  const startPlayer = useAudioPlayer(require('../assets/sounds/startnotification1.mp3'));
+  const endPlayer = useAudioPlayer(require('../assets/sounds/endalarm3.mp3'));
+  const pausePlayer = useAudioPlayer(require('../assets/sounds/pause2.mp3'));
 
   const triggerForegroundNotification = useCallback(async () => {
     if (vibrationEnabled && Platform.OS !== 'web') {
@@ -40,13 +42,13 @@ export function Timer() {
     }
     if (soundEnabled) {
       try {
-        player.seekTo(0);
-        player.play();
+        endPlayer.seekTo(0);
+        endPlayer.play();
       } catch (error) {
         console.error("Error playing sound", error);
       }
     }
-  }, [vibrationEnabled, soundEnabled, player]);
+  }, [vibrationEnabled, soundEnabled, endPlayer]);
 
   useEffect(() => {
     const loadSessionDataAndSettings = async () => {
@@ -127,6 +129,14 @@ export function Timer() {
   }, [isActive, isPaused, time, totalCompletedSessions, completedSessionsToday, awardPoints, triggerForegroundNotification, setIsTimerActive]);
 
   const handleStart = async () => {
+    if (soundEnabled) {
+      try {
+        startPlayer.seekTo(0);
+        startPlayer.play();
+      } catch (error) {
+        console.error("Error playing sound", error);
+      }
+    }
     await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
     setIsActive(true);
     setIsPaused(false);
@@ -138,6 +148,14 @@ export function Timer() {
   };
 
   const handleReset = async () => {
+    if (soundEnabled) {
+      try {
+        pausePlayer.seekTo(0);
+        pausePlayer.play();
+      } catch (error) {
+        console.error("Error playing sound", error);
+      }
+    }
     setIsActive(false);
     setTime(FOCUS_TIME_SECONDS);
     setIsPaused(true);
