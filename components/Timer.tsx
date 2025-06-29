@@ -1,12 +1,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Pressable, Vibration, Platform } from 'react-native';
+import { View, StyleSheet, Pressable, Vibration, Platform, Alert } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
+import { TimerAnimation } from './TimerAnimation';
 import { usePoints } from '@/hooks/usePoints';
 import { useBadges } from '@/hooks/useBadges';
+import { useTimerActive } from '@/context/TimerActiveContext';
 
 const FOCUS_TIME_MINUTES = 25;
 const FOCUS_TIME_SECONDS = FOCUS_TIME_MINUTES * 60;
@@ -20,6 +23,7 @@ export function Timer() {
   const [time, setTime] = useState(FOCUS_TIME_SECONDS);
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
+  const { isTimerActive, setIsTimerActive } = useTimerActive();
   const [totalCompletedSessions, setTotalCompletedSessions] = useState(0);
   const [completedSessionsToday, setCompletedSessionsToday] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -80,8 +84,6 @@ export function Timer() {
     loadSessionDataAndSettings();
   }, []);
 
-  
-
   useEffect(() => {
     let interval: number | null = null;
 
@@ -119,18 +121,33 @@ export function Timer() {
   }, [isActive, isPaused, time, totalCompletedSessions, completedSessionsToday, awardPoints, triggerForegroundNotification]);
 
   const handleStart = () => {
-    setIsActive(true);
-    setIsPaused(false);
+    Alert.alert(
+      "Rotate Device",
+      "Please rotate your device horizontally for the best experience.",
+      [
+        {
+          text: "OK",
+          onPress: async () => {
+            await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
+            setIsActive(true);
+            setIsPaused(false);
+            setIsTimerActive(true);
+          },
+        },
+      ]
+    );
   };
 
   const handlePauseResume = () => {
     setIsPaused(!isPaused);
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setIsActive(false);
     setTime(FOCUS_TIME_SECONDS);
     setIsPaused(true);
+    setIsTimerActive(false);
+    await ScreenOrientation.unlockAsync();
   };
 
   const formatTime = (timeInSeconds: number) => {
@@ -141,22 +158,28 @@ export function Timer() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.timerText}>{formatTime(time)}</ThemedText>
-      <View style={styles.controls}>
-        {!isActive && isPaused && 
-            <Pressable style={styles.button} onPress={handleStart}>
-                <ThemedText>Start</ThemedText>
+      {!isTimerActive ? (
+        <>
+          <ThemedText style={styles.timerText}>{formatTime(time)}</ThemedText>
+          <View style={styles.controls}>
+            {!isActive && isPaused && 
+                <Pressable style={styles.button} onPress={handleStart}>
+                    <ThemedText>Start</ThemedText>
+                </Pressable>
+            }
+            {isActive && (
+                <Pressable style={styles.button} onPress={handlePauseResume}>
+                    <ThemedText>{isPaused ? 'Resume' : 'Pause'}</ThemedText>
+                </Pressable>
+            )}
+            <Pressable style={styles.button} onPress={handleReset}>
+              <ThemedText>Reset</ThemedText>
             </Pressable>
-        }
-        {isActive && (
-            <Pressable style={styles.button} onPress={handlePauseResume}>
-                <ThemedText>{isPaused ? 'Resume' : 'Pause'}</ThemedText>
-            </Pressable>
-        )}
-        <Pressable style={styles.button} onPress={handleReset}>
-          <ThemedText>Reset</ThemedText>
-        </Pressable>
-      </View>
+          </View>
+        </>
+      ) : (
+        <TimerAnimation time={time} onStop={handleReset} />
+      )}
     </ThemedView>
   );
 }

@@ -7,9 +7,11 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { TimerActiveProvider, useTimerActive } from '@/context/TimerActiveContext';
 
-export default function TabLayout() {
+function TabContent() {
   const colorScheme = useColorScheme();
+  const { isTimerActive } = useTimerActive();
 
   return (
     <Tabs
@@ -19,14 +21,15 @@ export default function TabLayout() {
         headerTransparent: true,
         headerTitle: '',
         tabBarButton: HapticTab,
-        
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarStyle: {
+          ...(Platform.select({
+            ios: {
+              position: 'absolute',
+            },
+            default: {},
+          })),
+          display: isTimerActive ? 'none' : 'flex', // Hide tabs when timer is active
+        },
       }}>
       <Tabs.Screen
         name="index"
@@ -59,5 +62,13 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+  );
+}
+
+export default function TabLayout() {
+  return (
+    <TimerActiveProvider>
+      <TabContent />
+    </TimerActiveProvider>
   );
 }
