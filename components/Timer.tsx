@@ -97,10 +97,13 @@ export function Timer() {
       }
     }
 
-    if (time === 0) {
+    const handleTimerEnd = async () => {
+      if (time === 0) {
         setIsActive(false);
         triggerForegroundNotification();
         awardPoints(10);
+        setIsTimerActive(false);
+        await ScreenOrientation.unlockAsync();
         
         // Update session counts and persist
         const newTotal = totalCompletedSessions + 1;
@@ -111,31 +114,23 @@ export function Timer() {
         setCompletedSessionsToday(newDaily);
         AsyncStorage.setItem(DAILY_SESSIONS_KEY, JSON.stringify(newDaily));
         AsyncStorage.setItem(LAST_SESSION_DATE_KEY, new Date().toDateString());
-    }
+      }
+    };
+
+    handleTimerEnd();
 
     return () => {
       if (interval) {
         clearInterval(interval);
       }
     };
-  }, [isActive, isPaused, time, totalCompletedSessions, completedSessionsToday, awardPoints, triggerForegroundNotification]);
+  }, [isActive, isPaused, time, totalCompletedSessions, completedSessionsToday, awardPoints, triggerForegroundNotification, setIsTimerActive]);
 
-  const handleStart = () => {
-    Alert.alert(
-      "Rotate Device",
-      "Please rotate your device horizontally for the best experience.",
-      [
-        {
-          text: "OK",
-          onPress: async () => {
-            await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
-            setIsActive(true);
-            setIsPaused(false);
-            setIsTimerActive(true);
-          },
-        },
-      ]
-    );
+  const handleStart = async () => {
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
+    setIsActive(true);
+    setIsPaused(false);
+    setIsTimerActive(true);
   };
 
   const handlePauseResume = () => {
@@ -147,7 +142,7 @@ export function Timer() {
     setTime(FOCUS_TIME_SECONDS);
     setIsPaused(true);
     setIsTimerActive(false);
-    await ScreenOrientation.unlockAsync();
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
   };
 
   const formatTime = (timeInSeconds: number) => {
