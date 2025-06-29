@@ -83,8 +83,8 @@ export const SparkleEffect: React.FC<SparkleEffectProps> = ({
   count = 30, // Increased count
   sparkleSize = 8,
   animationDuration = 2000,
-  spreadRange = 100, // Spread sparkles within 100px from center
-  verticalMovementRange = 100, // Sparkles move up to 100px
+  spreadRange = 300, // Spread sparkles within 300px from center
+  verticalMovementRange = 300, // Sparkles move up to 300px
 }) => {
   const sparkles = Array.from({ length: count }).map((_, i) => {
     const randomColor = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];

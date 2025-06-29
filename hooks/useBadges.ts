@@ -10,13 +10,19 @@ interface Badge {
   description: string;
   earned: boolean;
   earnedDate?: string;
+  icon?: string; // New: Optional icon name for the badge
 }
 
 const initialBadges: Badge[] = [
-  { id: 'first-session', name: 'First Focus', description: 'Complete your first focus session.', earned: false },
-  { id: 'five-sessions', name: 'Five Focuses', description: 'Complete five focus sessions.', earned: false },
-  { id: 'daily-master', name: 'Daily Master', description: 'Complete three focus sessions in one day.', earned: false },
-  // Add more badges as needed
+  { id: 'first-session', name: 'First Focus', description: 'Complete your first focus session.', earned: false, icon: 'hourglass.toptimer.fill' },
+  { id: 'five-sessions', name: 'Five Focuses', description: 'Complete five focus sessions.', earned: false, icon: 'star.fill' },
+  { id: 'ten-sessions', name: 'Tenacious Ten', description: 'Complete ten focus sessions.', earned: false, icon: 'star.leading.half.filled' },
+  { id: 'twenty-five-sessions', name: 'Quarter Century Focus', description: 'Complete twenty-five focus sessions.', earned: false, icon: 'trophy.fill' },
+  { id: 'fifty-sessions', name: 'Half-Century Hustle', description: 'Complete fifty focus sessions.', earned: false, icon: 'crown.fill' },
+  { id: 'hundred-sessions', name: 'Centurion of Focus', description: 'Complete one hundred focus sessions.', earned: false, icon: 'medal.fill' },
+  { id: 'daily-master', name: 'Daily Master', description: 'Complete three focus sessions in one day.', earned: false, icon: 'calendar.badge.plus' },
+  { id: 'daily-pro', name: 'Daily Pro', description: 'Complete five focus sessions in one day.', earned: false, icon: 'calendar.badge.checkmark' },
+  { id: 'daily-legend', name: 'Daily Legend', description: 'Complete ten focus sessions in one day.', earned: false, icon: 'calendar.badge.exclamationmark' },
 ];
 
 export function useBadges(completedSessionsToday: number, totalCompletedSessions: number) {
@@ -27,7 +33,15 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
       try {
         const storedBadges = await AsyncStorage.getItem(BADGES_KEY);
         if (storedBadges !== null) {
-          setBadges(JSON.parse(storedBadges));
+          const parsedBadges = JSON.parse(storedBadges);
+          // Merge stored badges with initialBadges to add new badges without losing old ones
+          const mergedBadges = initialBadges.map(initialBadge => {
+            const storedBadge = parsedBadges.find((b: Badge) => b.id === initialBadge.id);
+            return storedBadge ? { ...initialBadge, ...storedBadge } : initialBadge;
+          });
+          setBadges(mergedBadges);
+        } else {
+          setBadges(initialBadges);
         }
       } catch (error) {
         console.error("Error loading badges", error);
@@ -41,29 +55,27 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
       let updatedBadges = [...badges];
       let newBadgeEarned = false;
 
-      // Check for 'First Focus' badge
-      const firstSessionBadge = updatedBadges.find(b => b.id === 'first-session');
-      if (firstSessionBadge && !firstSessionBadge.earned && totalCompletedSessions >= 1) {
-        firstSessionBadge.earned = true;
-        firstSessionBadge.earnedDate = new Date().toISOString();
-        newBadgeEarned = true;
-      }
+      const updateBadge = (id: string, condition: boolean) => {
+        const badge = updatedBadges.find(b => b.id === id);
+        if (badge && !badge.earned && condition) {
+          badge.earned = true;
+          badge.earnedDate = new Date().toISOString();
+          newBadgeEarned = true;
+        }
+      };
 
-      // Check for 'Five Focuses' badge
-      const fiveSessionsBadge = updatedBadges.find(b => b.id === 'five-sessions');
-      if (fiveSessionsBadge && !fiveSessionsBadge.earned && totalCompletedSessions >= 5) {
-        fiveSessionsBadge.earned = true;
-        fiveSessionsBadge.earnedDate = new Date().toISOString();
-        newBadgeEarned = true;
-      }
+      // Session Badges
+      updateBadge('first-session', totalCompletedSessions >= 1);
+      updateBadge('five-sessions', totalCompletedSessions >= 5);
+      updateBadge('ten-sessions', totalCompletedSessions >= 10);
+      updateBadge('twenty-five-sessions', totalCompletedSessions >= 25);
+      updateBadge('fifty-sessions', totalCompletedSessions >= 50);
+      updateBadge('hundred-sessions', totalCompletedSessions >= 100);
 
-      // Check for 'Daily Master' badge
-      const dailyMasterBadge = updatedBadges.find(b => b.id === 'daily-master');
-      if (dailyMasterBadge && !dailyMasterBadge.earned && completedSessionsToday >= 3) {
-        dailyMasterBadge.earned = true;
-        dailyMasterBadge.earnedDate = new Date().toISOString();
-        newBadgeEarned = true;
-      }
+      // Daily Badges
+      updateBadge('daily-master', completedSessionsToday >= 3);
+      updateBadge('daily-pro', completedSessionsToday >= 5);
+      updateBadge('daily-legend', completedSessionsToday >= 10);
 
       if (newBadgeEarned) {
         setBadges(updatedBadges);
