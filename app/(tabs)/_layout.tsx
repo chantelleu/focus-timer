@@ -11,7 +11,7 @@ import { useTimerActive } from '@/context/TimerActiveContext';
 
 function TabContent() {
   const colorScheme = useColorScheme();
-  const { isTimerActive } = useTimerActive();
+  const { isTimerActive, showRewardAnimation } = useTimerActive();
 
   return (
     <Tabs
@@ -28,7 +28,7 @@ function TabContent() {
             },
             default: {},
           })),
-          display: isTimerActive ? 'none' : 'flex', // Hide tabs when timer is active
+          display: (isTimerActive || showRewardAnimation) ? 'none' : 'flex', // Hide tabs when timer is active OR reward animation is showing
         },
       }}>
       <Tabs.Screen

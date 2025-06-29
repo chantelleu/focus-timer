@@ -1,18 +1,48 @@
-import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated, Easing, Pressable } from 'react-native';
 import { ThemedText } from './ThemedText';
+import { SparkleEffect } from './SparkleEffect';
+import { IconSymbol } from './ui/IconSymbol';
 
 interface RewardAnimationProps {
   onFinish: () => void;
+  showSparkles?: boolean;
+  badgeIconName?: string; // New prop for badge icon
 }
 
-export function RewardAnimation({ onFinish }: RewardAnimationProps) {
+export function RewardAnimation({ onFinish, showSparkles = true, badgeIconName }: RewardAnimationProps) {
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.back(1.7),
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [scaleAnim, opacityAnim]);
+
   return (
     <Pressable style={styles.container} onPress={onFinish}>
-      <View style={styles.content}>
+      <Animated.View
+        style={[
+          styles.content,
+          { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
+        ]}
+      >
+        {showSparkles && <SparkleEffect />}
+        {badgeIconName && <IconSymbol name={badgeIconName} size={60} color="#FFD700" style={{ marginBottom: 10 }} />}
         <ThemedText style={styles.title}>Congratulations!</ThemedText>
         <ThemedText style={styles.message}>You focused for the duration!</ThemedText>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -25,12 +55,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)', // Semi-transparent overlay
   },
   content: {
-    width: '80%',
-    paddingVertical: 40,
-    paddingHorizontal: 40,
+    flex: 1,
+    width: '100%',
     borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -41,12 +71,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#4CAF50', // Green color for success
+    color: '#000', // Changed to black
     textAlign: 'center',
   },
   message: {
     fontSize: 18,
     textAlign: 'center',
-    color: '#333',
+    color: '#000', // Changed to black
   },
 });

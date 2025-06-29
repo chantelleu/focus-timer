@@ -25,13 +25,12 @@ export function Timer() {
   const [time, setTime] = useState(FOCUS_TIME_SECONDS);
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
-  const { isTimerActive, setIsTimerActive } = useTimerActive();
   const [totalCompletedSessions, setTotalCompletedSessions] = useState(0);
   const [completedSessionsToday, setCompletedSessionsToday] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const [showRewardAnimation, setShowRewardAnimation] = useState(false);
+  const { isTimerActive, setIsTimerActive, showRewardAnimation, setShowRewardAnimation } = useTimerActive();
 
   const { awardPoints } = usePoints();
   useBadges(completedSessionsToday, totalCompletedSessions);
@@ -108,7 +107,8 @@ export function Timer() {
       triggerForegroundNotification();
       awardPoints(10);
       setIsTimerActive(false);
-      ScreenOrientation.unlockAsync();
+
+
       setShowRewardAnimation(true);
       
       // Update session counts and persist
@@ -177,14 +177,15 @@ export function Timer() {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  const handleRewardAnimationFinish = () => {
+  const handleRewardAnimationFinish = async () => {
     setShowRewardAnimation(false);
+    await ScreenOrientation.unlockAsync();
   };
 
   return (
     <ThemedView style={styles.container}>
       {showRewardAnimation ? (
-        <RewardAnimation onFinish={handleRewardAnimationFinish} />
+        <RewardAnimation onFinish={handleRewardAnimationFinish} badgeIconName="star.fill" />
       ) : !isTimerActive ? (
         <>
           <ThemedText style={styles.timerText}>{formatTime(time)}</ThemedText>
