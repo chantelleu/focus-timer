@@ -10,22 +10,79 @@ interface Badge {
   description: string;
   earned: boolean;
   earnedDate?: string;
-  icon?: string; // New: Optional icon name for the badge
+  icon?: string; // Optional icon name for the badge
+  assignedColor?: string; // New: Assigned color for earned badge
+  assignedIcon?: string; // New: Assigned icon for earned badge
 }
 
-const initialBadges: Badge[] = [
-  { id: 'first-session', name: 'First Focus', description: 'Complete your first focus session.', earned: false, icon: 'hourglass.toptimer.fill' },
-  { id: 'five-sessions', name: 'Five Focuses', description: 'Complete five focus sessions.', earned: false, icon: 'star.fill' },
-  { id: 'ten-sessions', name: 'Tenacious Ten', description: 'Complete ten focus sessions.', earned: false, icon: 'star.leading.half.filled' },
-  { id: 'twenty-five-sessions', name: 'Quarter Century Focus', description: 'Complete twenty-five focus sessions.', earned: false, icon: 'trophy.fill' },
-  { id: 'fifty-sessions', name: 'Half-Century Hustle', description: 'Complete fifty focus sessions.', earned: false, icon: 'crown.fill' },
-  { id: 'hundred-sessions', name: 'Centurion of Focus', description: 'Complete one hundred focus sessions.', earned: false, icon: 'medal.fill' },
-  { id: 'daily-master', name: 'Daily Master', description: 'Complete three focus sessions in one day.', earned: false, icon: 'calendar.badge.plus' },
-  { id: 'daily-pro', name: 'Daily Pro', description: 'Complete five focus sessions in one day.', earned: false, icon: 'calendar.badge.checkmark' },
-  { id: 'daily-legend', name: 'Daily Legend', description: 'Complete ten focus sessions in one day.', earned: false, icon: 'calendar.badge.exclamationmark' },
+const PASTEL_COLORS = [
+  '#FFB6C1', // Light Pink
+  '#ADD8E6', // Light Blue
+  '#90EE90', // Light Green
+  '#FFDAB9', // Peach Puff
+  '#E6E6FA', // Lavender
+  '#B0E0E6', // Powder Blue
+  '#F0E68C', // Khaki
+  '#A2D9CE', // Mint Green
+  '#F5B7B1', // Coral Pink
+  '#D7BDE2', // Light Purple
+  '#A9CCE3', // Sky Blue
+  '#FADBD8', // Light Salmon
 ];
 
-export function useBadges(completedSessionsToday: number, totalCompletedSessions: number) {
+let lastColorIndex = -1; // To keep track of the last used color index
+
+const ICON_OPTIONS = [
+  'star.fill',
+  'heart.fill',
+  'leaf.fill',
+  'bolt.fill',
+  'moon.fill',
+  'sun.max.fill',
+  'hourglass.toptimer.fill',
+  'checkmark.circle.fill',
+  'flame.fill',
+  'sparkles',
+  'medal.fill',
+  'trophy.fill',
+  'crown.fill',
+];
+
+let lastIconIndex = -1; // To keep track of the last used icon index
+
+const getUniquePastelColor = () => {
+  let newIndex = Math.floor(Math.random() * PASTEL_COLORS.length);
+  while (newIndex === lastColorIndex && PASTEL_COLORS.length > 1) {
+    newIndex = Math.floor(Math.random() * PASTEL_COLORS.length);
+  }
+  lastColorIndex = newIndex;
+  return PASTEL_COLORS[newIndex];
+};
+
+const getUniqueBadgeIcon = () => {
+  let newIndex = Math.floor(Math.random() * ICON_OPTIONS.length);
+  while (newIndex === lastIconIndex && ICON_OPTIONS.length > 1) {
+    newIndex = Math.floor(Math.random() * ICON_OPTIONS.length);
+  }
+  lastIconIndex = newIndex;
+  return ICON_OPTIONS[newIndex];
+};
+
+const initialBadges: Badge[] = [
+  { id: 'first-session', name: 'First Focus', description: 'Complete your first focus session.', earned: false, icon: 'hourglass.toptimer.fill', assignedIcon: getUniqueBadgeIcon() },
+  { id: 'five-sessions', name: 'Five Focuses', description: 'Complete five focus sessions.', earned: false, icon: 'star.fill', assignedIcon: getUniqueBadgeIcon() },
+  { id: 'ten-sessions', name: 'Tenacious Ten', description: 'Complete ten focus sessions.', earned: false, icon: 'star.leading.half.filled', assignedIcon: getUniqueBadgeIcon() },
+  { id: 'twenty-five-sessions', name: 'Quarter Century Focus', description: 'Complete twenty-five focus sessions.', earned: false, icon: 'trophy.fill', assignedIcon: getUniqueBadgeIcon() },
+  { id: 'fifty-sessions', name: 'Half-Century Hustle', description: 'Complete fifty focus sessions.', earned: false, icon: 'crown.fill', assignedIcon: getUniqueBadgeIcon() },
+  { id: 'hundred-sessions', name: 'Centurion of Focus', description: 'Complete one hundred focus sessions.', earned: false, icon: 'medal.fill', assignedIcon: getUniqueBadgeIcon() },
+  { id: 'daily-master', name: 'Daily Master', description: 'Complete three focus sessions in one day.', earned: false, icon: 'calendar.badge.plus', assignedIcon: getUniqueBadgeIcon() },
+  { id: 'daily-pro', name: 'Daily Pro', description: 'Complete five focus sessions in one day.', earned: false, icon: 'calendar.badge.checkmark', assignedIcon: getUniqueBadgeIcon() },
+  { id: 'daily-legend', name: 'Daily Legend', description: 'Complete ten focus sessions in one day.', earned: false, icon: 'calendar.badge.exclamationmark', assignedIcon: getUniqueBadgeIcon() },
+];
+
+const BADGE_POINT_VALUE = 50; // Points awarded per badge
+
+export function useBadges(completedSessionsToday: number, totalCompletedSessions: number, awardPoints: (points: number) => void) {
   const [badges, setBadges] = useState<Badge[]>(initialBadges);
 
   useEffect(() => {
@@ -60,6 +117,8 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
         if (badge && !badge.earned && condition) {
           badge.earned = true;
           badge.earnedDate = new Date().toISOString();
+          badge.assignedColor = getUniquePastelColor(); // Assign unique color
+          awardPoints(BADGE_POINT_VALUE); // Award points for earning a badge
           newBadgeEarned = true;
         }
       };

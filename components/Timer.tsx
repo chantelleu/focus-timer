@@ -33,7 +33,7 @@ export function Timer() {
   const { isTimerActive, setIsTimerActive, showRewardAnimation, setShowRewardAnimation } = useTimerActive();
 
   const { awardPoints } = usePoints();
-  useBadges(completedSessionsToday, totalCompletedSessions);
+  useBadges(completedSessionsToday, totalCompletedSessions, awardPoints);
 
   const startPlayer = useAudioPlayer(require('../assets/sounds/startnotification1.mp3'));
   const endPlayer = useAudioPlayer(require('../assets/sounds/endalarm3.mp3'));

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Switch, Platform } from 'react-native';
+import { StyleSheet, Switch, Platform, Pressable, Alert } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { CustomHeader } from '@/components/CustomHeader';
@@ -8,6 +8,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SOUND_ENABLED_KEY = 'sound-enabled';
 const VIBRATION_ENABLED_KEY = 'vibration-enabled';
+const BADGES_KEY = 'focus-timer-badges';
+const TOTAL_SESSIONS_KEY = 'total-completed-sessions';
+const DAILY_SESSIONS_KEY = 'daily-completed-sessions';
 
 export default function SettingsScreen() {
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -43,6 +46,31 @@ export default function SettingsScreen() {
     await AsyncStorage.setItem(VIBRATION_ENABLED_KEY, JSON.stringify(newValue));
   };
 
+  const clearBadgesAndSessions = async () => {
+    Alert.alert(
+      "Clear All Progress",
+      "Are you sure you want to clear all earned badges and session progress? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem(BADGES_KEY);
+              await AsyncStorage.removeItem(TOTAL_SESSIONS_KEY);
+              await AsyncStorage.removeItem(DAILY_SESSIONS_KEY);
+              Alert.alert("Success", "Badges and session progress cleared! Please close and reopen the app to see changes.");
+            } catch (error) {
+              console.error("Error clearing data", error);
+              Alert.alert("Error", "Failed to clear data.");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   return (
     <ThemedView style={styles.container}>
       <CustomHeader title="Settings" />
@@ -64,6 +92,10 @@ export default function SettingsScreen() {
           />
         </ThemedView>
       )}
+
+      <Pressable style={styles.settingItem} onPress={clearBadgesAndSessions}>
+        <ThemedText style={styles.settingText}>Clear All Badges & Progress</ThemedText>
+      </Pressable>
 
       {/* Future: Add session length presets or toggles */}
       {/* Future: Add light/dark mode toggle */}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -8,7 +7,7 @@ export function usePoints() {
   const [points, setPoints] = useState(0);
 
   useEffect(() => {
-    const getPoints = async () => {
+    const loadPoints = async () => {
       try {
         const storedPoints = await AsyncStorage.getItem(POINTS_KEY);
         if (storedPoints !== null) {
@@ -18,18 +17,15 @@ export function usePoints() {
         console.error("Error loading points", error);
       }
     };
-
-    getPoints();
+    loadPoints();
   }, []);
 
-  const awardPoints = async (newPoints: number) => {
-    try {
-      const updatedPoints = points + newPoints;
-      setPoints(updatedPoints);
-      await AsyncStorage.setItem(POINTS_KEY, JSON.stringify(updatedPoints));
-    } catch (error) {
-      console.error("Error saving points", error);
-    }
+  const awardPoints = async (amount: number) => {
+    setPoints((prevPoints) => {
+      const newPoints = prevPoints + amount;
+      AsyncStorage.setItem(POINTS_KEY, JSON.stringify(newPoints));
+      return newPoints;
+    });
   };
 
   return { points, awardPoints };
