@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { TimerActiveProvider, useTimerActive } from '@/context/TimerActiveContext';
+import { useTimerActive } from '@/context/TimerActiveContext';
 
 function TabContent() {
   const colorScheme = useColorScheme();
@@ -67,8 +67,6 @@ function TabContent() {
 
 export default function TabLayout() {
   return (
-    <TimerActiveProvider>
       <TabContent />
-    </TimerActiveProvider>
   );
 }

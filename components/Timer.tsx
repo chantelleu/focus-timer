@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Pressable, Vibration, Platform, Alert } from 'react-native';
+import { View, StyleSheet, Pressable, Vibration, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useAudioPlayer } from 'expo-audio';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { TimerAnimation } from './TimerAnimation';
+import { RewardAnimation } from './RewardAnimation';
 import { usePoints } from '@/hooks/usePoints';
 import { useBadges } from '@/hooks/useBadges';
 import { useTimerActive } from '@/context/TimerActiveContext';
 
-const FOCUS_TIME_MINUTES = 25;
+const FOCUS_TIME_MINUTES = 1;
 const FOCUS_TIME_SECONDS = FOCUS_TIME_MINUTES * 60;
 const TOTAL_SESSIONS_KEY = 'total-completed-sessions';
 const DAILY_SESSIONS_KEY = 'daily-completed-sessions';
@@ -28,6 +30,8 @@ export function Timer() {
   const [completedSessionsToday, setCompletedSessionsToday] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [showRewardAnimation, setShowRewardAnimation] = useState(false);
 
   const { awardPoints } = usePoints();
   useBadges(completedSessionsToday, totalCompletedSessions);
@@ -99,27 +103,24 @@ export function Timer() {
       }
     }
 
-    const handleTimerEnd = async () => {
-      if (time === 0) {
-        setIsActive(false);
-        triggerForegroundNotification();
-        awardPoints(10);
-        setIsTimerActive(false);
-        await ScreenOrientation.unlockAsync();
-        
-        // Update session counts and persist
-        const newTotal = totalCompletedSessions + 1;
-        setTotalCompletedSessions(newTotal);
-        AsyncStorage.setItem(TOTAL_SESSIONS_KEY, JSON.stringify(newTotal));
+    if (time === 0 && isActive) {
+      setIsActive(false);
+      triggerForegroundNotification();
+      awardPoints(10);
+      setIsTimerActive(false);
+      ScreenOrientation.unlockAsync();
+      setShowRewardAnimation(true);
+      
+      // Update session counts and persist
+      const newTotal = totalCompletedSessions + 1;
+      setTotalCompletedSessions(newTotal);
+      AsyncStorage.setItem(TOTAL_SESSIONS_KEY, JSON.stringify(newTotal));
 
-        const newDaily = completedSessionsToday + 1;
-        setCompletedSessionsToday(newDaily);
-        AsyncStorage.setItem(DAILY_SESSIONS_KEY, JSON.stringify(newDaily));
-        AsyncStorage.setItem(LAST_SESSION_DATE_KEY, new Date().toDateString());
-      }
-    };
-
-    handleTimerEnd();
+      const newDaily = completedSessionsToday + 1;
+      setCompletedSessionsToday(newDaily);
+      AsyncStorage.setItem(DAILY_SESSIONS_KEY, JSON.stringify(newDaily));
+      AsyncStorage.setItem(LAST_SESSION_DATE_KEY, new Date().toDateString());
+    }
 
     return () => {
       if (interval) {
@@ -129,6 +130,9 @@ export function Timer() {
   }, [isActive, isPaused, time, totalCompletedSessions, completedSessionsToday, awardPoints, triggerForegroundNotification, setIsTimerActive]);
 
   const handleStart = async () => {
+    setIsButtonDisabled(true);
+    setTimeout(() => setIsButtonDisabled(false), 1000);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (soundEnabled) {
       try {
         startPlayer.seekTo(0);
@@ -144,10 +148,14 @@ export function Timer() {
   };
 
   const handlePauseResume = () => {
+    setIsButtonDisabled(true);
+    setTimeout(() => setIsButtonDisabled(false), 1000);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsPaused(!isPaused);
   };
 
   const handleReset = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (soundEnabled) {
       try {
         pausePlayer.seekTo(0);
@@ -169,29 +177,35 @@ export function Timer() {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
+  const handleRewardAnimationFinish = () => {
+    setShowRewardAnimation(false);
+  };
+
   return (
     <ThemedView style={styles.container}>
-      {!isTimerActive ? (
+      {showRewardAnimation ? (
+        <RewardAnimation onFinish={handleRewardAnimationFinish} />
+      ) : !isTimerActive ? (
         <>
           <ThemedText style={styles.timerText}>{formatTime(time)}</ThemedText>
           <View style={styles.controls}>
-            {!isActive && isPaused && 
-                <Pressable style={styles.button} onPress={handleStart}>
+            {!isActive && isPaused ?
+                <Pressable style={styles.button} onPress={handleStart} disabled={isButtonDisabled}>
                     <ThemedText>Start</ThemedText>
                 </Pressable>
-            }
-            {isActive && (
-                <Pressable style={styles.button} onPress={handlePauseResume}>
+            : null}
+            {isActive ?
+                <Pressable style={styles.button} onPress={handlePauseResume} disabled={isButtonDisabled}>
                     <ThemedText>{isPaused ? 'Resume' : 'Pause'}</ThemedText>
                 </Pressable>
-            )}
+            : null}
             <Pressable style={styles.button} onPress={handleReset}>
               <ThemedText>Reset</ThemedText>
             </Pressable>
           </View>
         </>
       ) : (
-        <TimerAnimation time={time} onStop={handleReset} />
+        <TimerAnimation time={time} totalTime={FOCUS_TIME_SECONDS} onStop={handleReset} />
       )}
     </ThemedView>
   );

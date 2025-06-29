@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Pressable, Animated } from 'react-native';
 import { ThemedText } from './ThemedText';
+import { ProgressBar } from './ProgressBar';
 
-export function TimerAnimation({ time, onStop }: { time: number; onStop: () => void }) {
+export function TimerAnimation({ time, totalTime, onStop }: { time: number; totalTime: number; onStop: () => void }) {
   const formatTime = (timeInSeconds: number) => {
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = timeInSeconds % 60;
@@ -35,6 +36,7 @@ export function TimerAnimation({ time, onStop }: { time: number; onStop: () => v
 
   return (
     <Animated.View style={[styles.container, { backgroundColor }]}>
+      <ProgressBar timeRemaining={time} totalTime={totalTime} />
       <ThemedText style={styles.animationText}>{formatTime(time)}</ThemedText>
       <Pressable style={styles.button} onPress={onStop}>
         <ThemedText>Stop</ThemedText>
