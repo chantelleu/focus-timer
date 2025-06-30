@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Switch, Platform, Pressable, Alert } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { CustomHeader } from '@/components/CustomHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useThemes } from '@/hooks/useThemes';
 
 const SOUND_ENABLED_KEY = 'sound-enabled';
 const VIBRATION_ENABLED_KEY = 'vibration-enabled';
@@ -15,6 +15,8 @@ const DAILY_SESSIONS_KEY = 'daily-completed-sessions';
 export default function SettingsScreen() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const { getThemes, selectActiveTheme, activeThemeId } = useThemes();
+  const themes = getThemes();
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -93,6 +95,26 @@ export default function SettingsScreen() {
         </ThemedView>
       )}
 
+      <ThemedText style={styles.sectionTitle}>Themes</ThemedText>
+      {themes.map((theme) => (
+        <Pressable
+          key={theme.id}
+          onPress={() => selectActiveTheme(theme.id)}
+          style={styles.settingItem}
+          disabled={!theme.isUnlocked}
+        >
+          <ThemedText style={styles.settingText}>{theme.name}</ThemedText>
+          <ThemedView style={[styles.themePreview, { backgroundColor: theme.appColors.background }]}>
+            {activeThemeId === theme.id && (
+              <ThemedText style={styles.activeThemeIndicator}>✓</ThemedText>
+            )}
+            {!theme.isUnlocked && (
+              <ThemedText style={styles.lockedThemeIndicator}>🔒</ThemedText>
+            )}
+          </ThemedView>
+        </Pressable>
+      ))}
+
       <Pressable style={styles.settingItem} onPress={clearBadgesAndSessions}>
         <ThemedText style={styles.settingText}>Clear All Badges & Progress</ThemedText>
       </Pressable>
@@ -120,5 +142,29 @@ const styles = StyleSheet.create({
   },
   settingText: {
     fontSize: 18,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+    alignSelf: 'flex-start',
+  },
+  themePreview: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeThemeIndicator: {
+    fontSize: 20,
+    color: 'green',
+  },
+  lockedThemeIndicator: {
+    fontSize: 20,
+    color: 'red',
   },
 });
