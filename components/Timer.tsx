@@ -1,16 +1,16 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Pressable, Vibration, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, StyleSheet, Pressable, Vibration, Platform, Dimensions, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useAudioPlayer } from 'expo-audio';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
 import { TimerAnimation } from './TimerAnimation';
 import { RewardAnimation } from './RewardAnimation';
 import { useBadges } from '@/hooks/useBadges';
 import { useTimerActive } from '@/context/TimerActiveContext';
+import { useThemes } from '../hooks/useThemes';
+import { SOFT_PASTEL_COLORS } from '@/constants/Themes';
 
 const FOCUS_TIME_MINUTES = 1;
 const FOCUS_TIME_SECONDS = FOCUS_TIME_MINUTES * 60;
@@ -21,6 +21,8 @@ const SOUND_ENABLED_KEY = 'sound-enabled';
 const VIBRATION_ENABLED_KEY = 'vibration-enabled';
 
 export function Timer() {
+  const { width, height } = Dimensions.get('window');
+  const isLandscape = width > height;
   const [time, setTime] = useState(FOCUS_TIME_SECONDS);
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
@@ -30,6 +32,49 @@ export function Timer() {
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const { isTimerActive, setIsTimerActive, showRewardAnimation, setShowRewardAnimation } = useTimerActive();
+  const { getActiveThemeColors, activeThemeId } = useThemes();
+  const { appColors, timerColors } = getActiveThemeColors() || {};
+
+  const defaultTimerColors = {
+    primary: '#BB86FC', // Light purple for buttons on dark background
+    secondary: '#03DAC6',
+    barColor: '#6200EE',
+    fillColor: '#333333', // Dark color for the filling bar
+    textColor: '#FFFFFF',
+  };
+
+  const currentTimerColors = isLandscape ? timerColors : defaultTimerColors;
+
+  const animatedBackgroundColor = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (
+      activeThemeId === 'default' &&
+      isLandscape &&
+      isActive &&
+      !isPaused
+    ) {
+      Animated.loop(
+        Animated.sequence(
+          SOFT_PASTEL_COLORS.map((_, index) =>
+            Animated.timing(animatedBackgroundColor, {
+              toValue: index,
+              duration: 5000,
+              useNativeDriver: false,
+            })
+          )
+        )
+      ).start();
+    } else {
+      animatedBackgroundColor.stopAnimation();
+    }
+  }, [activeThemeId, isLandscape, isActive, isPaused]);
+
+
+  const backgroundColorInterpolate = animatedBackgroundColor.interpolate({
+    inputRange: SOFT_PASTEL_COLORS.map((_, index) => index),
+    outputRange: SOFT_PASTEL_COLORS,
+  });
 
   useBadges(completedSessionsToday, totalCompletedSessions);
 
@@ -180,32 +225,43 @@ export function Timer() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        activeThemeId === 'default' &&
+        isLandscape &&
+        isActive &&
+        !isPaused && {
+          backgroundColor: backgroundColorInterpolate,
+        },
+      ]}
+    >
+
       {showRewardAnimation ? (
         <RewardAnimation onFinish={handleRewardAnimationFinish} badgeIconName="star.fill" />
       ) : !isTimerActive ? (
         <>
-          <ThemedText style={styles.timerText}>{formatTime(time)}</ThemedText>
+          <ThemedText style={[styles.timerText, { color: appColors.text }]}>{formatTime(time)}</ThemedText>
           <View style={styles.controls}>
             {!isActive && isPaused ?
-                <Pressable style={styles.button} onPress={handleStart} disabled={isButtonDisabled}>
-                    <ThemedText>Start</ThemedText>
+                <Pressable style={[styles.button, { borderColor: appColors.tint }]} onPress={handleStart} disabled={isButtonDisabled}>
+                    <ThemedText style={{ color: appColors.text }}>Start</ThemedText>
                 </Pressable>
             : null}
             {isActive ?
-                <Pressable style={styles.button} onPress={handlePauseResume} disabled={isButtonDisabled}>
-                    <ThemedText>{isPaused ? 'Resume' : 'Pause'}</ThemedText>
+                <Pressable style={[styles.button, { borderColor: appColors.tint }]} onPress={handlePauseResume} disabled={isButtonDisabled}>
+                    <ThemedText style={{ color: appColors.text }}>{isPaused ? 'Resume' : 'Pause'}</ThemedText>
                 </Pressable>
             : null}
-            <Pressable style={styles.button} onPress={handleReset}>
-              <ThemedText>Reset</ThemedText>
+            <Pressable style={[styles.button, { borderColor: appColors.tint }]} onPress={handleReset}>
+              <ThemedText style={{ color: appColors.text }}>Reset</ThemedText>
             </Pressable>
           </View>
         </>
       ) : (
-        <TimerAnimation time={time} totalTime={FOCUS_TIME_SECONDS} onStop={handleReset} />
+        <TimerAnimation time={time} totalTime={FOCUS_TIME_SECONDS} onStop={handleReset} timerColors={currentTimerColors} />
       )}
-    </ThemedView>
+    </Animated.View>
   );
 }
 
