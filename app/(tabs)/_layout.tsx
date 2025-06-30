@@ -1,22 +1,20 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { useTimerActive } from '@/context/TimerActiveContext';
+import { useThemes } from '@/hooks/useThemes';
 
 function TabContent() {
-  const colorScheme = useColorScheme();
   const { isTimerActive, showRewardAnimation } = useTimerActive();
+  const { getActiveThemeColors } = useThemes();
+  const { appColors } = getActiveThemeColors();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: appColors.tint,
         headerShown: true,
         headerTransparent: true,
         headerTitle: '',
