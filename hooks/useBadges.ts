@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { IconSymbolName } from '@/components/ui/IconSymbol';
 
 const BADGES_KEY = 'focus-timer-badges';
 
@@ -9,9 +10,9 @@ interface Badge {
   description: string;
   earned: boolean;
   earnedDate?: string;
-  icon?: string; // Optional icon name for the badge
+  icon?: IconSymbolName; // Optional icon name for the badge
   assignedColor?: string; // Assigned color for earned badge
-  assignedIcon?: string; // Assigned icon for earned badge
+  assignedIcon?: IconSymbolName; // Assigned icon for earned badge
   redeemed: boolean; // Tracks if the badge has been redeemed
 }
 
@@ -108,7 +109,6 @@ const initialBadges: Badge[] = [
 ];
 
 export function useBadges(completedSessionsToday: number, totalCompletedSessions: number) {
-  console.log("useBadges hook invoked");
   const [badges, setBadges] = useState<Badge[]>(initialBadges);
 
   useEffect(() => {
@@ -128,11 +128,9 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
               }
               // Always ensure assignedIcon is set from initialBadge.icon
               merged.assignedIcon = initialBadge.icon;
-              console.log(`loadBadges: Merged badge ${merged.id}, assignedIcon: ${merged.assignedIcon}`);
               return merged;
             } else {
               // For new badges not in storage, ensure assignedIcon is set
-              console.log(`loadBadges: New badge ${initialBadge.id}, assignedIcon: ${initialBadge.icon}`);
               return { ...initialBadge, redeemed: false, assignedIcon: initialBadge.icon };
             }
           });
@@ -161,7 +159,6 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
           badge.earnedDate = new Date().toISOString();
           badge.assignedColor = initialBadgeData.assignedColor; // Assign specific color from initialBadges
           badge.assignedIcon = initialBadgeData.icon; // Assign specific icon from initialBadges
-          console.log(`updateBadge: Badge ${badge.id} earned, assignedIcon: ${badge.assignedIcon}`);
           newBadgeEarned = true;
         }
       };
