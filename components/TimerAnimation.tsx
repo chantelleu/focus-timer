@@ -1,47 +1,23 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Pressable, Animated } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ProgressBar } from './ProgressBar';
+import { TimerColors } from '@/constants/Themes';
 
-export function TimerAnimation({ time, totalTime, onStop }: { time: number; totalTime: number; onStop: () => void }) {
+export function TimerAnimation({ time, totalTime, onStop, timerColors }: { time: number; totalTime: number; onStop: () => void; timerColors: TimerColors }) {
   const formatTime = (timeInSeconds: number) => {
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = timeInSeconds % 60;
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  const animatedValue = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(animatedValue, {
-          toValue: 1,
-          duration: 5000,
-          useNativeDriver: false,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 5000,
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  const backgroundColor = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#FF6347', '#4682B4'], // Tomato to SteelBlue
-  });
-
   return (
-    <Animated.View style={[styles.container, { backgroundColor }]}>
-      <ProgressBar timeRemaining={time} totalTime={totalTime} />
-      <ThemedText style={styles.animationText}>{formatTime(time)}</ThemedText>
-      <Pressable style={styles.button} onPress={onStop}>
-        <ThemedText>Stop</ThemedText>
+    <View style={styles.container}>
+      <ProgressBar timeRemaining={time} totalTime={totalTime} barColor={timerColors.barColor} fillColor={timerColors.fillColor} />
+      <ThemedText style={[styles.animationText, { color: timerColors.textColor }]}>{formatTime(time)}</ThemedText>
+      <Pressable style={[styles.button, { borderColor: '#FFFFFF' }]} onPress={onStop}>
+        <ThemedText style={{ color: '#FFFFFF' }}>Stop</ThemedText>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -55,7 +31,6 @@ const styles = StyleSheet.create({
   animationText: {
     fontSize: 120,
     fontWeight: 'bold',
-    color: '#fff',
   },
   button: {
     marginTop: 20,
@@ -63,6 +38,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderWidth: 1,
     borderRadius: 5,
-    borderColor: '#ccc',
   },
 });
