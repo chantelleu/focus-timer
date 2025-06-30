@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing, Pressable } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { SparkleEffect } from './SparkleEffect';
-import { IconSymbol } from './ui/IconSymbol';
+import { IconSymbol, IconSymbolName } from './ui/IconSymbol';
 
 interface RewardAnimationProps {
   onFinish: () => void;
   showSparkles?: boolean;
-  badgeIconName?: string; // New prop for badge icon
+  badgeIconName?: IconSymbolName;
 }
 
 export function RewardAnimation({ onFinish, showSparkles = true, badgeIconName }: RewardAnimationProps) {
