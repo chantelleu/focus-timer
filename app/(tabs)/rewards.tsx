@@ -1,5 +1,4 @@
-
-import { StyleSheet, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -8,6 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { CustomHeader } from '@/components/CustomHeader';
 import { useBadges } from '@/hooks/useBadges';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { RedeemBadgeModal } from '@/components/RedeemBadgeModal'; // Import the modal component
 
 const TOTAL_SESSIONS_KEY = 'total-completed-sessions';
 const DAILY_SESSIONS_KEY = 'daily-completed-sessions';
@@ -16,6 +16,8 @@ const LAST_SESSION_DATE_KEY = 'last-session-date';
 export default function RewardsScreen() {
   const [totalCompletedSessions, setTotalCompletedSessions] = useState(0);
   const [completedSessionsToday, setCompletedSessionsToday] = useState(0);
+  const [isRedeemModalVisible, setIsRedeemModalVisible] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState<any>(null); // Store the badge to be redeemed
 
   useEffect(() => {
     const loadSessionData = async () => {
@@ -43,7 +45,17 @@ export default function RewardsScreen() {
     loadSessionData();
   }, []);
 
-  const { badges } = useBadges(completedSessionsToday, totalCompletedSessions);
+  const { badges, redeemBadge } = useBadges(completedSessionsToday, totalCompletedSessions); // Get redeemBadge from hook
+
+  const handleBadgePress = (badge: any) => {
+    setSelectedBadge(badge);
+    setIsRedeemModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsRedeemModalVisible(false);
+    setSelectedBadge(null); // Clear selected badge when modal closes
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -54,14 +66,22 @@ export default function RewardsScreen() {
         {
           badges.filter(badge => badge.earned).length > 0 ? (
             badges.filter(badge => badge.earned).map((badge) => (
-              <ThemedView key={badge.id} style={[styles.badgeContainer, { backgroundColor: badge.assignedColor || '#f0f0f0' }]}>
-                {badge.assignedIcon && <IconSymbol name={badge.assignedIcon} size={40} color="#FFD700" style={{ marginBottom: 5 }} />}
+              <Pressable
+                key={badge.id}
+                onPress={() => handleBadgePress(badge)} // Open modal on press
+                style={[
+                  styles.badgeContainer,
+                  { backgroundColor: badge.assignedColor || '#f0f0f0' },
+                  badge.redeemed && styles.redeemedBadgeContainer,
+                ]}
+              >
+                {badge.assignedIcon && <IconSymbol name={badge.assignedIcon} size={40} color={badge.assignedColor || "#FFD700"} style={{ marginBottom: 5 }} />}
                 <ThemedText style={styles.badgeName}>{badge.name}</ThemedText>
                 <ThemedText style={styles.badgeDescription}>{badge.description}</ThemedText>
                 {badge.earnedDate && (
                   <ThemedText style={styles.badgeDate}>Earned: {new Date(badge.earnedDate).toLocaleDateString()}</ThemedText>
                 )}
-              </ThemedView>
+              </Pressable>
             ))
           ) : (
             <ThemedText>No badges earned yet. Keep focusing!</ThemedText>
@@ -83,6 +103,14 @@ export default function RewardsScreen() {
           )
         }
       </ScrollView>
+
+      {/* Redeem Badge Modal */}
+      <RedeemBadgeModal
+        isVisible={isRedeemModalVisible}
+        badge={selectedBadge}
+        onClose={handleModalClose}
+        onRedeem={redeemBadge} // Pass the redeemBadge function
+      />
     </ThemedView>
   );
 }
@@ -95,7 +123,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     alignItems: 'center',
-    paddingBottom: 20, // Add some padding at the bottom for better scrolling
+    paddingBottom: 80, // Increased padding at the bottom for better scrolling
   },
   subtitle: {
     fontSize: 22,
@@ -110,6 +138,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     width: '100%',
     alignItems: 'center',
+    minHeight: 100, // Added minHeight to ensure tappable area
+  },
+  redeemedBadgeContainer: {
+    opacity: 0.6, // Make redeemed badges slightly transparent
+    borderWidth: 2,
+    borderColor: '#A9A9A9', // Add a border to redeemed badges
   },
   badgeName: {
     fontSize: 18,
