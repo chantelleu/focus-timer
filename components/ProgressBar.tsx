@@ -4,6 +4,8 @@ import { View, StyleSheet, Animated } from 'react-native';
 interface ProgressBarProps {
   timeRemaining: number;
   totalTime: number;
+  barColor: string;
+  fillColor: string;
 }
 
 export function ProgressBar({ timeRemaining, totalTime }: ProgressBarProps) {
