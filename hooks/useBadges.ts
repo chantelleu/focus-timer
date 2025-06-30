@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BADGES_KEY = 'focus-timer-badges';
@@ -11,8 +10,9 @@ interface Badge {
   earned: boolean;
   earnedDate?: string;
   icon?: string; // Optional icon name for the badge
-  assignedColor?: string; // New: Assigned color for earned badge
-  assignedIcon?: string; // New: Assigned icon for earned badge
+  assignedColor?: string; // Assigned color for earned badge
+  assignedIcon?: string; // Assigned icon for earned badge
+  redeemed: boolean; // Tracks if the badge has been redeemed
 }
 
 const PASTEL_COLORS = [
@@ -22,7 +22,7 @@ const PASTEL_COLORS = [
   '#FFDAB9', // Peach Puff
   '#E6E6FA', // Lavender
   '#B0E0E6', // Powder Blue
-  '#F0E68C', // Khaki
+  
   '#A2D9CE', // Mint Green
   '#F5B7B1', // Coral Pink
   '#D7BDE2', // Light Purple
@@ -69,18 +69,46 @@ const getUniqueBadgeIcon = () => {
 };
 
 const initialBadges: Badge[] = [
-  { id: 'first-session', name: 'First Focus', description: 'Complete your first focus session.', earned: false, icon: 'hourglass.toptimer.fill', assignedIcon: getUniqueBadgeIcon() },
-  { id: 'five-sessions', name: 'Five Focuses', description: 'Complete five focus sessions.', earned: false, icon: 'star.fill', assignedIcon: getUniqueBadgeIcon() },
-  { id: 'ten-sessions', name: 'Tenacious Ten', description: 'Complete ten focus sessions.', earned: false, icon: 'star.leading.half.filled', assignedIcon: getUniqueBadgeIcon() },
-  { id: 'twenty-five-sessions', name: 'Quarter Century Focus', description: 'Complete twenty-five focus sessions.', earned: false, icon: 'trophy.fill', assignedIcon: getUniqueBadgeIcon() },
-  { id: 'fifty-sessions', name: 'Half-Century Hustle', description: 'Complete fifty focus sessions.', earned: false, icon: 'crown.fill', assignedIcon: getUniqueBadgeIcon() },
-  { id: 'hundred-sessions', name: 'Centurion of Focus', description: 'Complete one hundred focus sessions.', earned: false, icon: 'medal.fill', assignedIcon: getUniqueBadgeIcon() },
-  { id: 'daily-master', name: 'Daily Master', description: 'Complete three focus sessions in one day.', earned: false, icon: 'calendar.badge.plus', assignedIcon: getUniqueBadgeIcon() },
-  { id: 'daily-pro', name: 'Daily Pro', description: 'Complete five focus sessions in one day.', earned: false, icon: 'calendar.badge.checkmark', assignedIcon: getUniqueBadgeIcon() },
-  { id: 'daily-legend', name: 'Daily Legend', description: 'Complete ten focus sessions in one day.', earned: false, icon: 'calendar.badge.exclamationmark', assignedIcon: getUniqueBadgeIcon() },
+  {
+    id: 'first-session', name: 'First Focus', description: 'Complete your first focus session.', earned: false, icon: 'heart.fill', assignedColor: '#A9CCE3',
+    redeemed: false
+  },
+  {
+    id: 'five-sessions', name: 'Five Focuses', description: 'Complete five focus sessions.', earned: false, icon: 'star.fill', assignedColor: '#D7BDE2',
+    redeemed: false
+  },
+  {
+    id: 'ten-sessions', name: 'Tenacious Ten', description: 'Complete ten focus sessions.', earned: false, icon: 'bolt.fill', assignedColor: '#FFB6C1',
+    redeemed: false
+  },
+  {
+    id: 'twenty-five-sessions', name: 'Quarter Century Focus', description: 'Complete twenty-five focus sessions.', earned: false, icon: 'trophy.fill', assignedColor: '#FFECB3',
+    redeemed: false
+  },
+  {
+    id: 'fifty-sessions', name: 'Half-Century Hustle', description: 'Complete fifty focus sessions.', earned: false, icon: 'crown.fill', assignedColor: '#90EE90',
+    redeemed: false
+  },
+  {
+    id: 'hundred-sessions', name: 'Centurion of Focus', description: 'Complete one hundred focus sessions.', earned: false, icon: 'medal.fill', assignedColor: '#FFDAB9',
+    redeemed: false
+  },
+  {
+    id: 'daily-master', name: 'Daily Master', description: 'Complete three focus sessions in one day.', earned: false, icon: 'calendar.badge.plus', assignedColor: '#A9CCE3',
+    redeemed: false
+  },
+  {
+    id: 'daily-pro', name: 'Daily Pro', description: 'Complete five focus sessions in one day.', earned: false, icon: 'calendar.badge.checkmark', assignedColor: '#FFB6C1',
+    redeemed: false
+  },
+  {
+    id: 'daily-legend', name: 'Daily Legend', description: 'Complete ten focus sessions in one day.', earned: false, icon: 'calendar.badge.exclamationmark', assignedColor: '#D7BDE2',
+    redeemed: false
+  },
 ];
 
 export function useBadges(completedSessionsToday: number, totalCompletedSessions: number) {
+  console.log("useBadges hook invoked");
   const [badges, setBadges] = useState<Badge[]>(initialBadges);
 
   useEffect(() => {
@@ -92,11 +120,26 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
           // Merge stored badges with initialBadges to add new badges without losing old ones
           const mergedBadges = initialBadges.map(initialBadge => {
             const storedBadge = parsedBadges.find((b: Badge) => b.id === initialBadge.id);
-            return storedBadge ? { ...initialBadge, ...storedBadge } : initialBadge;
+            if (storedBadge) {
+              const merged = { ...initialBadge, ...storedBadge, redeemed: storedBadge.redeemed || false };
+              // If badge is earned but has no assignedColor (e.g., old data), assign one
+              if (merged.earned && !merged.assignedColor) {
+                merged.assignedColor = initialBadge.assignedColor;
+              }
+              // Always ensure assignedIcon is set from initialBadge.icon
+              merged.assignedIcon = initialBadge.icon;
+              console.log(`loadBadges: Merged badge ${merged.id}, assignedIcon: ${merged.assignedIcon}`);
+              return merged;
+            } else {
+              // For new badges not in storage, ensure assignedIcon is set
+              console.log(`loadBadges: New badge ${initialBadge.id}, assignedIcon: ${initialBadge.icon}`);
+              return { ...initialBadge, redeemed: false, assignedIcon: initialBadge.icon };
+            }
           });
           setBadges(mergedBadges);
         } else {
-          setBadges(initialBadges);
+          // If no stored badges, initialize all badges with assignedIcon
+          setBadges(initialBadges.map(badge => ({ ...badge, assignedIcon: badge.icon })));
         }
       } catch (error) {
         console.error("Error loading badges", error);
@@ -112,10 +155,13 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
 
       const updateBadge = (id: string, condition: boolean) => {
         const badge = updatedBadges.find(b => b.id === id);
-        if (badge && !badge.earned && condition) {
+        const initialBadgeData = initialBadges.find(b => b.id === id); // Get initial data here
+        if (badge && !badge.earned && condition && initialBadgeData) {
           badge.earned = true;
           badge.earnedDate = new Date().toISOString();
-          badge.assignedColor = getUniquePastelColor(); // Assign unique color
+          badge.assignedColor = initialBadgeData.assignedColor; // Assign specific color from initialBadges
+          badge.assignedIcon = initialBadgeData.icon; // Assign specific icon from initialBadges
+          console.log(`updateBadge: Badge ${badge.id} earned, assignedIcon: ${badge.assignedIcon}`);
           newBadgeEarned = true;
         }
       };
@@ -146,5 +192,23 @@ export function useBadges(completedSessionsToday: number, totalCompletedSessions
     checkAndAwardBadges();
   }, [completedSessionsToday, totalCompletedSessions, badges]);
 
-  return { badges };
+  const redeemBadge = async (badgeId: string): Promise<boolean> => {
+    let updatedBadges = [...badges];
+    const badgeToRedeem = updatedBadges.find(b => b.id === badgeId);
+
+    if (badgeToRedeem && badgeToRedeem.earned && !badgeToRedeem.redeemed) {
+      badgeToRedeem.redeemed = true;
+      setBadges(updatedBadges);
+      try {
+        await AsyncStorage.setItem(BADGES_KEY, JSON.stringify(updatedBadges));
+        return true;
+      } catch (error) {
+        console.error("Error redeeming badge", error);
+        return false;
+      }
+    }
+    return false;
+  };
+
+  return { badges, redeemBadge };
 }
